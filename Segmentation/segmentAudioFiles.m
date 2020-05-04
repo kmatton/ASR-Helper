@@ -130,12 +130,10 @@ end;
 segFilePaths = {};
 segStartTimes = {};
 segEndTimes = {};
-Segments.Start = Segments.Start / Fs;
-Segments.Stop = Segments.Stop / Fs;
 % format times as strings
-for i = 1:length(segStartTimes)
-    segStartTimes{i} = int2str(round(Segments.Start(i) * 100));
-    segEndTimes{i} = int2str(round(Segments.Stop(i) * 100));
+for i = 1:length(Segments.Start)
+    segStartTimes{i} = int2str(round(Segments.Start(i) / Fs * 100));
+    segEndTimes{i} = int2str(round(Segments.Stop(i) / Fs * 100));
 end
 
 % if writeAudio, write segment audio to files
