@@ -1,10 +1,10 @@
-function segmentAudioFiles(audioDir, outputDir, nj, writeAudio)
+function segmentAudioFiles(audioDir, outputDir, nj, writeAudio, voiceBoxPath)
 % SEGMENTAUDIOFILES - Segment audio files into regions of continuous speech using the ComboSAD algorithm.
 % Creates segments.txt file in outputDir that has one line per segment of the form:
 % <callID> <segment start> <segment end> <path to segment wav file(if writeAudio is true)>
 % callID is assumed to be the name of the file in audioDir that segment was extracted from.
 %
-% Syntax: segmentAudioFiles(audioDir, outputDir, writeAudio)
+% Syntax: segmentAudioFiles(audioDir, outputDir, writeAudio, voiceBoxPath)
 %
 % Inputs:
 %    audioDir (str) - Path to directory where audio files are located.
@@ -13,6 +13,7 @@ function segmentAudioFiles(audioDir, outputDir, nj, writeAudio)
 %    nj (int) - Number of jobs to use in executing segment extraction.
 %    writeAudio (bool)- If true, write segments to audio files in outputDir. 
 %                       Otherwise, only record start and end times of segments. 
+%    voiceBoxPath (str) - Path to directory where VOIECEBOX toolbox is stored
 %
 % Other m-files required: extractComboSAD, formContiguousSegments, resampleSignalAfterWindowing, 
 %     splitSignalBySegments, enframe (from VOICEBOX toolbox)
@@ -20,6 +21,8 @@ function segmentAudioFiles(audioDir, outputDir, nj, writeAudio)
 % MAT-files required: none
 
 %------------- BEGIN CODE --------------
+
+addpath('./ComboSAD', './Support', './Segments', voiceBoxPath); 
 
 audioFiles = dir(audioDir, '*.wav');
 numFiles = length(audioFiles);
