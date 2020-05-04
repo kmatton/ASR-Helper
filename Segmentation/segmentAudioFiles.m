@@ -25,7 +25,7 @@ function segmentAudioFiles(audioDir, outputDir, nj, writeAudio, voiceBoxPath, er
 
 addpath('./ComboSAD', './Support', './Segments', voiceBoxPath);
 
-% create output directory if it doesn't exist
+% create output directory if it does not exist
 if ~exist(outputDir, 'dir')
     mkdir(outputDir)
 end 
@@ -62,7 +62,6 @@ allStartTimes = [allStartTimes{:}];
 allEndTimes = [allEndTimes{:}];
 allSegFilePaths = [allSegFilePaths{:}];
 allCallIDs = [allCallIDs{:}];
-allStartTimes
 
 % create segments.txt file with info about segments
 outputFileName = 'segments.txt';
@@ -70,8 +69,8 @@ outFileID = fopen(fullfile(outputDir, outputFileName), 'w');
 numSegs = length(allStartTimes);
 for i = 1:numSegs
     callID = allCallIDs{i};
-    segStart = allStartTimes(i);
-    segEnd = allStartTimes(i);
+    segStart = allStartTimes{i};
+    segEnd = allStartTimes{i};
     if writeAudio
         segFormat = '%s %s %s %s\n';
         segFilePath = allSegFilePaths{i};
@@ -98,8 +97,8 @@ function [segStartTimes, segEndTimes, segFilePaths] = segmentAudioFile(audioFile
 %    errorFileID (int) - ID of text file for logging calls where segmentation fails.
 %
 % Outputs:
-%    segStartTimes (vector of scalars) - Vector of start times for each segment.
-%    segEndTimes (vector of scalaras) - Vector of end times for each segment.
+%    segStartTimes (cell array of strings) - Cell array start times (formatted as strings) for each segment.
+%    segEndTimes (cell array of strings) - Cell array of end times for each segment.
 %    segFilePaths (cell array of strings) - Each string is path to wav file created for single segment.
 %                     
 %
@@ -122,15 +121,22 @@ function [segStartTimes, segEndTimes, segFilePaths] = segmentAudioFile(audioFile
 catch ME
     [~,callID,~] = fileparts(audioFilePath);
     fprintf(errorFileID, '%s %s %s\n', callID, ME.message, audioFilePath);
-    segStartTimes = [];
-    segEndTimes = [];
+    segStartTimes = {};
+    segEndTimes = {};
     segFilePaths = {};
     return;
 end;
     
-segStartTimes = Segments.Start / Fs;
-segEndTimes = Segments.Stop / Fs;
 segFilePaths = {};
+segStartTimes = {};
+segEndTimes = {};
+Segments.Start = Segments.Start / Fs;
+Segments.Stop = Segments.Stop / Fs;
+% format times as strings
+for i = 1:length(segStartTimes)
+    segStartTimes{i} = int2str(round(Segments.Start(i) * 100));
+    segEndTimes{i} = int2str(round(Segments.Stop(i) * 100));
+end
 
 % if writeAudio, write segment audio to files
 if writeAudio
@@ -140,9 +146,7 @@ if writeAudio
     sigsize = size(splitSignal);
     numsegs = sigsize(1);
     for i = 1:numsegs
-        segStartStr = int2str(round(segStartTimes(i) * 100));
-        segEndStr = int2str(round(segEndTimes(i) * 100));
-        outFileName = sprintf(outFileFormat, callID, segStartStr, segEndStr);
+        outFileName = sprintf(outFileFormat, callID, segStartTimes{i}, segEndTimes{i});
         outFilePath = fullfile(outputDir, outFileName);
         audiowrite(outFilePath, splitSignal{i}, Fs);
         segFilePaths{i} = outFilePath;
