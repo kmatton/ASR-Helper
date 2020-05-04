@@ -70,7 +70,7 @@ numSegs = length(allStartTimes);
 for i = 1:numSegs
     callID = allCallIDs{i};
     segStart = allStartTimes(i);
-    segEnd = allStartTimes(i);
+    segEnd = allEndTimes(i);
     if writeAudio
         segFormat = '%s %0.5f %0.5f %s\n';
         segFilePath = allSegFilePaths{i};
@@ -129,7 +129,7 @@ end;
     
 segFilePaths = {};
 segStartTimes = Segments.Start / Fs;
-segEndTimes = Segments.End / Fs;
+segEndTimes = Segments.Stop / Fs;
 
 % if writeAudio, write segment audio to files
 if writeAudio
@@ -139,11 +139,9 @@ if writeAudio
     sigsize = size(splitSignal);
     numsegs = sigsize(1);
     for i = 1:numsegs
-        segStartStr = int2str(round(segStartTimes(i) / Fs * 100));
-        segEndStr = int2str(round(segEndTimes(i) / Fs * 100));
+        segStartStr = int2str(round(segStartTimes(i) * 100));
+        segEndStr = int2str(round(segEndTimes(i) * 100));
         outFileName = sprintf(outFileFormat, callID, segStartStr, segEndStr);
-        segEndStr
-        outFileName
         outFilePath = fullfile(outputDir, outFileName);
         audiowrite(outFilePath, splitSignal{i}, Fs);
         segFilePaths{i} = outFilePath;
