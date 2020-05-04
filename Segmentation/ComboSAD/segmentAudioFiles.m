@@ -14,22 +14,67 @@ function segmentAudioFiles(audioDir, outputDir, nj, writeAudio)
 %    writeAudio (bool)- If true, write segments to audio files in outputDir. 
 %                       Otherwise, only record start and end times of segments. 
 %
-% Other m-files required: extractComboSAD, resampleSignalAfterWindowing, 
-%    enframe (from VOICEBOX toolbox)
+% Other m-files required: extractComboSAD, formContiguousSegments, resampleSignalAfterWindowing, 
+%     splitSignalBySegments, enframe (from VOICEBOX toolbox)
 % Subfunctions: segmentAudioFile
 % MAT-files required: none
 
 %------------- BEGIN CODE --------------
 
-Enter your executable matlab commands here
+audioFiles = dir(audioDir, '*.wav');
+numFiles = length(audioFiles);
 
+allStartTimes = cell(numFiles);
+allEndTimes = cell(numFiles);
+allSegFilePaths = cell(numFiles);
+allCallIDs = cell(numFiles);
+
+% segment each audio file and save metadata info
+parpool(nj);
+parfor i=1:numFiles
+    audioFileName = audioFiles(i);
+    audioFilePath = fullfile(audioDir, audioFileName);
+    [segStartTimes, segEndTimes, segFilePaths] = segmentAudioFile(audioFilePath, outputDir, writeAudio);
+    allStartTimes{i} = segStartTimes;
+    allEndTimes{i} = segEndTimes;
+    allSegFilePaths{i} = segFilePaths;
+    callID, _ = fileparts(audioFileName);
+    numSegs = length(segStartTimes);
+    segCallIDs = repelem(callID, numSegs);
+    allCallIDs{i} = segCallIDs;
+end
+
+% flatten segment cell arrays
+allStartTimes = [allStartTimes{:}];
+allEndTimes = [allEndTimes{:}];
+allSegFilePaths = [allSegFilePaths{:}];
+allCallIDs = [allCallIDs{:}];
+
+% create segments.txt file with info about segments
+outputFileName = 'segments.txt';
+outFileID = fopen(fullfile(outputDir, outputFileName), 'w');
+numSegs = length(allStartTimes);
+for i = 1:numSegs
+    callID = allCallIDs(i);
+    segStart = allStartTimes(i);
+    segEnd = allStartTimes(i);
+    if writeAudio
+        segFormat = '%s_%s_%s_%s\n';
+        segFilePath = allSegFilePaths(i);
+        fprintf(outFileID, segFormat, callID, segStart, segEnd, segFilePath);
+    else
+        segFormat = '%s_%s_%s\n';
+        fprintf(outFileID, segFormat, callID, segStart, segEnd);
+    end
+end
+    
 %------------- END OF CODE --------------
 
-function [segTimes, segFilePaths] = segmentAudioFile(audioFilePath)
+function [segStartTimes, segEndTimes, segFilePaths] = segmentAudioFile(audioFilePath, outputDir, writeAudio)
 % SEGMENTAUDIOFILE - Segment single audio file into regions of continuous speech using the ComboSAD algorithm.
 % Helper function for segmentAudioFiles
 %
-% Syntax: [segTimes, segFilePaths] = segmentAudioFile(audio, outputDir, writeAudio)
+% Syntax: [segStartTimes, segEndTimes, segFilePaths] = segmentAudioFile(audio, outputDir, writeAudio)
 %
 % Inputs:
 %    audioFilePath - Path to audio file to segment.
@@ -37,12 +82,13 @@ function [segTimes, segFilePaths] = segmentAudioFile(audioFilePath)
 %    writeAudio (bool) - If true, write audio for each segment to a wav file.
 %
 % Outputs:
-%    segTimes (list of tuples of scalars) - Each tuple is start and end time for single segment.
+%    segStartTimes (list of scalars) - List of start times for each segment.
+%    segEndTimes (list of scalaras) - List of end times for each segment.
 %    segFilePaths (list of strings) - Each string is path to wav file created for single segment.
 %                     
 %
-% Other m-files required: extractComboSAD, resampleSignalAfterWindowing, 
-%    enframe (from VOICEBOX toolbox)
+% Other m-files required: extractComboSAD, formContiguousSegments, resampleSignalAfterWindowing, 
+%     splitSignalBySegments, enframe (from VOICEBOX toolbox)
 % Subfunctions: none
 % MAT-files required: none
 
@@ -58,10 +104,30 @@ function [segTimes, segFilePaths] = segmentAudioFile(audioFilePath)
     Segments = formContiguousSegments(comboSignal, 0.3*Fss, 0.8*Fss, 30*Fss);
     Segments = resampleTimesAfterWindowing(Segments, segParams);
 catch ME
-    fprintf('Error: %s\n', ME.message);
-    fprintf('file is %s\n', filestr);
-    continue;
+    fprintf('Error: %s for audio file %s\n', ME.message, audioFilePath);
+    segStartTimes = [];
+    segEndTimes = [];
+    segFilePaths = [];
+    return;
 end;
     
 startTimes = Segments.Start / Fs;
 endTimes = Segments.Stop / Fs;
+segFilePaths = [];
+
+% if writeAudio, write segment audio to files
+if writeAudio
+    outFileFormat = '%s_%s_%s.wav';
+    _, callID, _ = fileparts(audioFilePath);
+    [splitSignal] = splitSignalBySegments(audio, Segments);
+    sigsize = size(splitSignal);
+    numsegs = sigsize(1);
+    for i = 1:numsegs
+        segStartStr = int2str(round(startTimes(i) * 100));
+        segEndStr = int2str(round(endTimes(i) * 100));
+        outFileName = sprintf(outFileFormat, callID, segStartStr, SegEndStr);
+        audiowrite(outFileName, splitSignal{i}, Fs);
+    end
+end
+
+%------------- END OF CODE --------------
