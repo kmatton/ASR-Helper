@@ -19,6 +19,9 @@ source ~/.bashrc
 #                which may be necessary for really large datasets. (optional arg, default 1)
 # --kaldi_dir: Path to Kaldi directory (e.g. kaldi-5.2/egs/<some dataset>/s5) that is base directory from wich to run
 #              data prep utils.
+# --convert_file_cmd: Command for converting audio files to WAV PCM format, which is expected by Kaldi. 
+#                     Optional, as files may already be in the correct format. Example command is: sox {}  -t wav -r 8000 - |
+#                     (should include {} where audio file path should go).
 
 # initialize options with default values
 audio_dir=
@@ -36,7 +39,7 @@ kaldi_dir=
 
 # run python data prep file to create directories and wav.scp, utt2spk, and segments files
 python prep_asr_data_dir.py --audio_dir $audio_dir --output_dir $output_dir --segments_dir $segments_dir \
-  --metadata_file_path $metadata_file_path --num_groups $num_groups
+  --metadata_file_path $metadata_file_path --num_groups $num_groups --convert_file_cmd $convert_file_cmd
 
 # sort files
 cd $output_dir
