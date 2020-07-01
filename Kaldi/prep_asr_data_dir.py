@@ -88,11 +88,12 @@ def prep_data_dir(output_dir, audio_dir, audio_file_names, id2sub, segments_dir=
         segments_out_file.close()
 
 
-def prep_data_dirs(args, id2sub, group_file=None):
+def prep_data_dirs(args, id2sub, group_file=None, audio_conversion_cmd=None):
     """
     :param args: Argument Parser argument with member variables corresponding to command line arguments.
     :param id2sub: Dict mapping ids used in naming audio files to subject ids.
     :param group_file: (optional) Open file to write the names of groups that data is split into to.
+    :param audio_conversion_cmd: (optional str) command to use to convert audio files to format expected by Kaldi
     """
     # split data into groups if group_size is given and prepare directory for each group
     audio_file_names = os.listdir(args.audio_dir)
@@ -104,11 +105,11 @@ def prep_data_dirs(args, id2sub, group_file=None):
         for i in range(0, len(audio_file_names), group_size):
             group_file_names = audio_file_names[i:i+group_size]
             group_out_dir = os.path.join(args.output_dir, "group_{}".format(group_num))
-            prep_data_dir(group_out_dir, args.audio_dir, group_file_names, id2sub, args.segments_dir, args.convert_file_cmd)
+            prep_data_dir(group_out_dir, args.audio_dir, group_file_names, id2sub, args.segments_dir, audio_conversion_cmd)
             group_file.write("group_{}\n".format(group_num))
             group_num += 1
     else:
-        prep_data_dir(args.output_dir, args.audio_dir, audio_file_names, id2sub, args.segments_dir, args.convert_file_cmd)
+        prep_data_dir(args.output_dir, args.audio_dir, audio_file_names, id2sub, args.segments_dir, audio_conversion_cmd)
 
 
 def main():
@@ -151,7 +152,11 @@ def main():
     if args.num_groups != 1:
         group_file = open(os.path.join(args.output_dir, "group_names.txt"), 'w+')
 
-    prep_data_dirs(args, id2sub, group_file)
+    # get audio conversion command if provided
+    audio_conversion_cmd = None
+    if args.convert_file_cmd and args.convert_file_cmd != "None":
+        audio_id = args.convert_file_cmd
+    prep_data_dirs(args, id2sub, group_file, audio_conversion_cmd)
 
     group_file.close()
 

@@ -28,9 +28,9 @@ audio_dir=
 output_dir=
 segments_dir="None"
 metadata_file_path=
-id_mapping_file_path="None"
 num_groups=1
 kaldi_dir=
+convert_file_cmd="None"
 
 # use parse_options.sh script (given in Kaldi) to enable the specification of command line arguments
 # ex: --argument value
