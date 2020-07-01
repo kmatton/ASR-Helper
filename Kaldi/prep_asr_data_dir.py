@@ -1,4 +1,5 @@
-import argparse, os, pickle
+import argparse, os, pickle, math
+
 import numpy as np
 from IPython import embed
 
@@ -92,10 +93,11 @@ def prep_data_dirs(args, id2sub, group_file=None):
     audio_file_names = os.listdir(args.audio_dir)
     # filter to only include files that are named *.wav
     audio_file_names = [f for f in audio_file_names if f[-4:] == ".wav"]
-    if args.group_size != -1:
+    if args.num_groups != 1:
         group_num = 0
-        for i in range(0, len(audio_file_names), args.group_size):
-            group_file_names = audio_file_names[i:i+args.group_size]
+        group_size = math.ceil(len(audio_file_names)/ args.num_groups)
+        for i in range(0, len(audio_file_names), group_size):
+            group_file_names = audio_file_names[i:i+group_size]
             group_out_dir = os.path.join(args.output_dir, "group_{}".format(group_num))
             prep_data_dir(group_out_dir, args.audio_dir, group_file_names, id2sub, args.segments_dir)
             group_file.write("group_{}\n".format(group_num))
@@ -137,7 +139,7 @@ def main():
 
     # create file to write group names to if group_size is given
     group_file = None
-    if args.group_size != 1:
+    if args.num_groups != 1:
         group_file = open(os.path.join(args.output_dir, "group_names.txt"), 'w+')
 
     prep_data_dirs(args, id2sub, group_file)
