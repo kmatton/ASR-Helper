@@ -4,16 +4,8 @@ import numpy as np
 from IPython import embed
 
 """
-Program to prepare data directory in format required to run Kaldi ASR model on call audio.
+Script to prepare data directory in format required to run Kaldi ASR model on call audio.
 """
-
-
-def isint(value):
-  try:
-    int(value)
-    return True
-  except ValueError:
-    return False
 
 
 def write_line_to_wav(wav_scp_file, rec_id, audio_dir, file_name):
@@ -54,14 +46,12 @@ def write_segment_lines(segments_out_file, file_name, utt2spk_file, rec_id, sub_
         segments_out_file.write(out_line)
 
 
-def prep_data_dir(output_dir, audio_dir, audio_file_names, meta_df, wav_id_type, id_dict=None, segments_dir=None):
+def prep_data_dir(output_dir, audio_dir, audio_file_names, id2sub, segments_dir=None):
     """
     :param output_dir: Directory to make metadata files in.
     :param audio_dir: Path to directory where audio files are stored.
     :param audio_file_names: Names of audio files to use when making metadata files for in output_dir.
-    :param meta_df: DataFrame with metadata for dataset (e.g. such as mappings between speaker ids and call ids).
-    :param wav_id_type: call_id or segment_id depending on what types of audio files we have.
-    :param id_dict: (optional) Dictionary mapping ids used to name audio files to new id names you want to use.
+    :param id2sub: Dict mapping ids used in naming audio files to subject ids.
     :param segments_dir: (optional) Directory where call segment timing information is.
     """
     if not os.path.exists(output_dir):
@@ -73,29 +63,18 @@ def prep_data_dir(output_dir, audio_dir, audio_file_names, meta_df, wav_id_type,
         segments_out_file = open(os.path.join(output_dir, "segments"), 'w+')
     for file_name in audio_file_names:
         # get call or segment_id (i.e. remove .wav ending)
-        data_id = file_name[:-4]
-        # convert to int if possible
-        if isint(data_id):
-            data_id = int(data_id)
-        # map to alternate id if id_dict is provided
-        if id_dict:
-            data_id = id_dict[data_id]
-        # get relevant info from metadata dataframe
-        sub_id = meta_df[meta_df[wav_id_type] == data_id]["subject_id"].values[0]
-        # if sub_id is NaN skip this file
-        # NOTE: could change this, but for now won't need data where we don't know subject
-        if np.isnan(sub_id):
-            continue
-        # convert sub_id to int
-        sub_id = int(sub_id)
-        rec_id = "{}_{}".format(sub_id, data_id)
+        audio_id = file_name[:-4]
+        # get subject id
+        sub_id = id2sub[audio_id]
+        # create recording id and write to wav.scp file
+        rec_id = "{}_{}".format(sub_id, audio_id)
         write_line_to_wav(wav_scp_file, rec_id, audio_dir, file_name)
         if segments_dir and segments_dir != "None":
             # need to get all segments in call and create a line for each of them in both utt2spk and segments files
             write_segment_lines(segments_out_file, file_name, utt2spk_file, rec_id, sub_id, segments_dir)
             segments_out_file.close()
         else:
-            # if no segments dir, data_id is segment_id and we can use rec_id as utt_id in utt2spk file
+            # if no segments dir, audio_id is segment_id and we can use rec_id as utt_id in utt2spk file
             out_line = ("{} {}\n".format(rec_id, sub_id))
             utt2spk_file.write(out_line)
     wav_scp_file.close()
@@ -104,12 +83,10 @@ def prep_data_dir(output_dir, audio_dir, audio_file_names, meta_df, wav_id_type,
         segments_out_file.close()
 
 
-def prep_data_dirs(args, meta_df, wav_id_type, id_dict=None, group_file=None):
+def prep_data_dirs(args, id2sub, group_file=None):
     """
     :param args: Argument Parser argument with member variables corresponding to command line arguments.
-    :param meta_df: DataFrame with metadata for dataset (e.g. such as mappings between speaker ids and call ids).
-    :param wav_id_type: call_id or segment_id depending on what types of audio files we have.
-    :param id_dict: (optional) Dictionary mapping ids used to name audio files to new id names you want to use.
+    :param id2sub: Dict mapping ids used in naming audio files to subject ids.
     :param group_file: (optional) Open file to write the names of groups that data is split into to.
     """
     # split data into groups if group_size is given and prepare directory for each group
@@ -121,69 +98,50 @@ def prep_data_dirs(args, meta_df, wav_id_type, id_dict=None, group_file=None):
         for i in range(0, len(audio_file_names), args.group_size):
             group_file_names = audio_file_names[i:i+args.group_size]
             group_out_dir = os.path.join(args.output_dir, "group_{}".format(group_num))
-            prep_data_dir(group_out_dir, args.audio_dir, group_file_names, meta_df, wav_id_type,
-                          id_dict, args.segments_dir)
+            prep_data_dir(group_out_dir, args.audio_dir, group_file_names, id2sub, args.segments_dir)
             group_file.write("group_{}\n".format(group_num))
             group_num += 1
     else:
-        prep_data_dir(args.output_dir, args.audio_dir, audio_file_names, meta_df, wav_id_type,
-                      id_dict, args.segments_dir)
+        prep_data_dir(args.output_dir, args.audio_dir, audio_file_names, id2sub, args.segments_dir)
 
 
 def main():
     # Read in and process command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--audio_dir', type=str, help='Directory containing audio wav files. It is assumed that '
-                                                            'files are named call_id.wav or segment_id.wav')
+                                                            'files are named call_id.wav if they contain full calls '
+                                                            'and segment_id.wav if they contain segments of calls.')
     parser.add_argument('-o', '--output_dir', type=str, help='Data directory to output ASR prep files to')
     parser.add_argument('-s', '--segments_dir', type=str, help='Directory containing files with segment times'
-                                                               'for each call audio file. Expect each file in the '
-                                                               'directory to be named call_id.txt and to contain lines '
-                                                               'of the form <segment_start> <segment_end> (in ms). '
-                                                               'If no segments directory is specified or "None" is ' 
-                                                               'specified, assume that calls have already been '
-                                                               'segmented and audio directory contains segment wav '
-                                                               'files. ')
-    parser.add_argument('-m', '--metadata_file_path', type=str, help='Path to pickled DataFrame containing metadata '
-                                                                     'information, including mapping between '
-                                                                     'subject_ids, call_ids, and segment_ids')
-    parser.add_argument('-i', '--id_mapping_file_path', type=str, help='Path to pickled dictionary containing mapping'
-                                                                       'between ids used to named audio files and ids'
-                                                                       'that you want to use in your experiments. For'
-                                                                       'example, may want to consistently name segments'
-                                                                       '<call_id>_<seg_start>_<seg_end> instead of '
-                                                                       'using integer ids given.')
-    parser.add_argument('-g', '--group_size', type=int, default=-1, help='If not -1, will split data into groups and'
-                                                                         'create multiple directories within the'
-                                                                         'overall data directory so ASR model can be'
-                                                                         'run and different portions of the data'
-                                                                         'separately (may be necessary for really large'
-                                                                         'datasets). Group size is number of audio'
-                                                                         'files to process at once/ create a single' 
-                                                                         'subdirectory for.')
+                                                               'for each call audio file. Each each file in the '
+                                                               'directory should be named call_id.txt and contain lines '
+                                                               'of the form <segment_start> <segment_end> (in ms). ' 
+                                                               '(only used if audio directory contains call rather than '
+                                                               ' segment files)')
+    parser.add_argument('-m', '--metadata_file_path', type=str, help='Path to text file containing mapping between audio file '
+                                                                     'ids (i.e. call or segment ids) and subject ids. '
+                                                                     'Each line should be of the form <audio_id> <subject_id>.')
+    parser.add_argument('-g', '--num_groups', type=int, default=1, help='If not 1, will split data into <num_groups> groups'
+                                                                        'and create a directory for each of them within the'
+                                                                        'main data directory. This way the ASR model can be'
+                                                                        'run and different portions of the data separately '
+                                                                        '(may be necessary for really large datasets).')
 
     args = parser.parse_args()
 
-    # Determine if audio files are for calls or segments
-    wav_id_type = "segment_id"
-    if args.segments_dir and args.segments_dir != "None":
-        # if directory is specified to hold files with segment times, then wav files are at the call level
-        wav_id_type = "call_id"
-
-    # Load metadata file and id mapping dict
-    meta_df = pd.read_pickle(args.metadata_file_path)
-    id_dict = None
-    if args.id_mapping_file_path and args.id_mapping_file_path != "None":
-        id_dict_file = open(args.id_mapping_file_path, 'rb')
-        id_dict = pickle.load(id_dict_file)
-        id_dict_file.close()
+    # create dict mapping audio file ids to subject ids
+    id2sub = {}
+    with open(args.metadata_file_path, 'r') as f:
+        for line in f:
+            audio_id, subject_id = line.strip().split(" ")
+            id2sub[audio_id] = subject_id
 
     # create file to write group names to if group_size is given
     group_file = None
-    if args.group_size != -1:
+    if args.group_size != 1:
         group_file = open(os.path.join(args.output_dir, "group_names.txt"), 'w+')
 
-    prep_data_dirs(args, meta_df, wav_id_type, id_dict, group_file)
+    prep_data_dirs(args, id2sub, group_file)
 
     group_file.close()
 

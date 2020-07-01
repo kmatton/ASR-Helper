@@ -2,9 +2,9 @@
 
 # Script to run pre-trained ASR model on audio data after data dir is prepared according to Kaldi requirements
 
-# use parse_options.sh script (given in Kaldi) to enable the specification of command line arguments
-# like: --argument value
-# arsguments for this script are:
+# uses parse_options.sh script (given in Kaldi) to enable the specification of command line arguments
+# speificy arguments like: --argument value
+# arguments for this script are:
 # --data_dir: Path to data dir associated with data you want to run ASR on (as prepared by prep_asr_data_dir.sh script)
 # --kaldi_dir: Path to Kaldi directory that contains data dir (e.g. kaldi-5.2/egs/<some dataset>/s5)
 # --stage: Integer to indicate starting point within the script. Useful if want to restart partway after
