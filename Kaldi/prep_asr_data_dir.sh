@@ -17,8 +17,8 @@ source ~/.bashrc
 #  --num_groups: If not 1, will split data into <num_groups> groups and create a directory for each of them within the
 #                main data directory. This way the ASR model can be run and different portions of the data separately,
 #                which may be necessary for really large datasets. (optional arg, default 1)
-# --kaldi_dir: Path to Kaldi directory (e.g. kaldi-5.2/egs/<some dataset>/s5) that is base directory to run utils
-#              and other scripts
+# --kaldi_dir: Path to Kaldi directory (e.g. kaldi-5.2/egs/<some dataset>/s5) that is base directory from wich to run
+#              data prep utils.
 
 # initialize options with default values
 audio_dir=
