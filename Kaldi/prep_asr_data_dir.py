@@ -8,16 +8,20 @@ Script to prepare data directory in format required to run Kaldi ASR model on ca
 """
 
 
-def write_line_to_wav(wav_scp_file, rec_id, audio_dir, file_name):
+def write_line_to_wav(wav_scp_file, rec_id, audio_dir, file_name, audio_conversion_cmd=None):
     """
     :param wav_scp_file: Opened wav.scp file to write to.
     :param rec_id: Id uniquely identifying audio file (<sub_id>_<call_id> if call files
     or <sub_id>_<call_id>_<seg_start>_<seg_end> if segment files).
     :param audio_dir: Path to directory where audio files are stored.
     :param file_name: Name of audio file to make entry in wav.scp file for.
+    :param audio_conversion_cmd: (optional str) command for converting audio files to format expected by Kaldi
     """
     file_path = os.path.join(audio_dir, file_name)
-    audio_path = "sox {}  -t wav -r 8000 - |".format(file_path)
+    if audio_conversion_cmd is not None:
+        audio_path = audio_conversion_cmd.format(file_path)
+    else:
+        audio_path = file_path
     out_line = "{} {}\n".format(rec_id, audio_path)
     wav_scp_file.write(out_line)
 
@@ -46,13 +50,14 @@ def write_segment_lines(segments_out_file, file_name, utt2spk_file, rec_id, sub_
         segments_out_file.write(out_line)
 
 
-def prep_data_dir(output_dir, audio_dir, audio_file_names, id2sub, segments_dir=None):
+def prep_data_dir(output_dir, audio_dir, audio_file_names, id2sub, segments_dir=None, audio_conversion_cmd=None):
     """
     :param output_dir: Directory to make metadata files in.
     :param audio_dir: Path to directory where audio files are stored.
     :param audio_file_names: Names of audio files to use when making metadata files for in output_dir.
     :param id2sub: Dict mapping ids used in naming audio files to subject ids.
     :param segments_dir: (optional) Directory where call segment timing information is.
+    :param audio_conversion_cmd: (optional, str) command for converting audio files to format expected by Kaldi
     """
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -68,7 +73,7 @@ def prep_data_dir(output_dir, audio_dir, audio_file_names, id2sub, segments_dir=
         sub_id = id2sub[audio_id]
         # create recording id and write to wav.scp file
         rec_id = "{}_{}".format(sub_id, audio_id)
-        write_line_to_wav(wav_scp_file, rec_id, audio_dir, file_name)
+        write_line_to_wav(wav_scp_file, rec_id, audio_dir, file_name, audio_conversion_cmd)
         if segments_dir and segments_dir != "None":
             # need to get all segments in call and create a line for each of them in both utt2spk and segments files
             write_segment_lines(segments_out_file, file_name, utt2spk_file, rec_id, sub_id, segments_dir)
@@ -99,11 +104,11 @@ def prep_data_dirs(args, id2sub, group_file=None):
         for i in range(0, len(audio_file_names), group_size):
             group_file_names = audio_file_names[i:i+group_size]
             group_out_dir = os.path.join(args.output_dir, "group_{}".format(group_num))
-            prep_data_dir(group_out_dir, args.audio_dir, group_file_names, id2sub, args.segments_dir)
+            prep_data_dir(group_out_dir, args.audio_dir, group_file_names, id2sub, args.segments_dir, args.convert_file_cmd)
             group_file.write("group_{}\n".format(group_num))
             group_num += 1
     else:
-        prep_data_dir(args.output_dir, args.audio_dir, audio_file_names, id2sub, args.segments_dir)
+        prep_data_dir(args.output_dir, args.audio_dir, audio_file_names, id2sub, args.segments_dir, args.convert_file_cmd)
 
 
 def main():
@@ -127,6 +132,10 @@ def main():
                                                                         'main data directory. This way the ASR model can be'
                                                                         'run and different portions of the data separately '
                                                                         '(may be necessary for really large datasets).')
+    parser.add_argument('-c', '--convert_file_cmd', type=str, help='Command for converting audio files to WAV PCM format, '
+                                                                   'which is expected by Kaldi. Optional, as files may already '
+                                                                   'be in the correct format. Example command is: "sox {}  -t wav -r 8000 - |" '
+                                                                   '(should include {} where audio file path should go).')
 
     args = parser.parse_args()
 
