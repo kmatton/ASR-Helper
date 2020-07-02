@@ -8,9 +8,9 @@
 # --data_dir: Path to data dir associated with data you want to run ASR on (as prepared by prep_asr_data_dir.sh script)
 # --kaldi_dir: Path to Kaldi directory that contains data dir (e.g. kaldi-5.2/egs/<some dataset>/s5)
 # --stage: Integer to indicate starting point within the script. Useful if want to restart partway after
-#          only partially successful execution.
+#          only partially successful execution. (Optional arg, must be 0 or 1 if provided)
 # --groups_file: path of file that has names of groups if data was split into groups during data prepartion step.
-# --output_dir: directory for storing lattice files and decoded text files
+# --output_dir: directory for storing lattice files and decoded text files (must already exist)
 # --decode_config: path of configuration file to use during decoding (path starting from kaldi_dir, not full path)
 # --word_symbol_table: file to use when mapping between symbols (how Kaldi stores words internally) and words (path starting from kaldi_dir, not full path)
 # --mdl_path: path to file containing acoustic model (path starting from kaldi_dir, not full path)
