@@ -57,8 +57,6 @@ if [ $stage -le 0 ]; then
   fi
 fi
 
-exit
-
 # STAGE 1: decode lattice files to get text files
 if [ $stage -le 1 ]; then
   # if groups file specified, run decoding for each group in parallel
