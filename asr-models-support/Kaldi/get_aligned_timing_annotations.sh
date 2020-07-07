@@ -7,7 +7,7 @@
 # --zipped_lattices: [0 | 1] to indicate if lattices are stored as zipped .gz files (1 = True)
 #                    (if so, need to unzip them)
 # --kaldi_dir: Path to Kaldi directory that contains data dir (e.g. kaldi-5.2/egs/<some dataset>/s5)
-# --stage: Integer to indicate starting point within the script. Useful if want to restart partway after
+# --stage: Integer to indicate starting point within the script. Useful if want to restart part way after
 #          only partially successful execution.
 # --groups_file: path of file that has names of groups if data was split into groups during data prepartion step.
 # --output_dir: directory for storing aligned timing annotations and other files created in generating them
@@ -15,7 +15,7 @@
 # --word_bndry_path: path to word boundary file (contains mapping from phone ids to placement within words)
 # --word_symbol_table: file to use when mapping between symbols (how Kaldi stores words internally) and words
 # --phone_symbol_table: file to use when mapping between symbols (how Kaldi stores words internally) and phones
-# --lexicion_path: phone mapping words to their phonetic readings
+# --lexicon_path: phone mapping words to their phonetic readings
 
 # set default argument values
 
@@ -80,7 +80,7 @@ fi
 # STAGE 1: Get transcript that contains words given by decoding step that involved calculating aligned word timing info
 # note: you may be able to use transcripts obtained differently (e.g. directly from lattice-best-path command)
 # but I'm not sure and have included these steps to be safe
-if [ $stage -eq 1 ]; then
+if [ $stage -le 1 ]; then
   # if groups file is specified, run timing annotation collection on each group in parallel
   if [ ! -z "$groups_file" ]; then
     # create file with word-level aligned timing annotations
@@ -104,7 +104,7 @@ if [ $stage -eq 1 ]; then
 fi
 
 # STAGE 2: Use aligned phone timing file and transcript file to get aligned word + phone timing.
-if [ $stage -eq 2 ]; then
+if [ $stage -le 2 ]; then
   # if groups file is specified, run timing annotation collection on each group in parallel
   if [ ! -z "$groups_file" ]; then
     ali="$output_dir/ali_phones_with_length_{}.txt"
