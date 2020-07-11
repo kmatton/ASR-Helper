@@ -1,5 +1,6 @@
 import re
 import string
+import unicodedata
 
 import inflect
 p = inflect.engine()
@@ -107,8 +108,11 @@ def process_non_ascii(text):
     text = str.replace(text, u'\u2019', "'")
     if text.isascii():
         return text
-    print("Not an ascii-encoded string")
+    # normalize unicode characters in a way that replaces accented characters with their
+    # unaccented versions
+    text = unicodedata.normalize('NFD', text).encode('ascii', 'ignore')
     embed()
+    return text
 
 
 def has_numbers(input_string):
