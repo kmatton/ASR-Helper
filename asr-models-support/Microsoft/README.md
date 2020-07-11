@@ -24,5 +24,5 @@ More details on the script options are specified within the script itself.
 
 ### Subdirectories
 The subdirectories within this directory are as follows:
-* resources: contains miscellaneous, undocumented scripts that contain additional functionality to support working with Microsoft Azure. Documentation for these scripts will be added eventually.
 * sample_data: contains audio and transcript data that Microsoft provides as examples of how data should be formated when working with the Custom Speech service. Data was downloaded from [here](https://github.com/Azure-Samples/cognitive-services-speech-sdk/tree/master/sampledata/customspeech/en-US).
+* resources: contains miscellaneous, undocumented scripts that contain additional functionality to support working with Microsoft Azure. Documentation for these scripts will be added eventually.

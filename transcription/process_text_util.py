@@ -82,6 +82,7 @@ def map_words(text, word_map):
     num_words = len(words)
     i = 0
     while i < num_words:
+        word = words[i]
         if word in word_map.keys():
             word = word_map[word]
         sub_words = word.split(" ")
