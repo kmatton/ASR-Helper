@@ -41,4 +41,4 @@ This directory contains scripts for the following:
 
 3. Word and Phone Timing Extraction with Pre-Trained Kaldi Model
    Scripts for generating word and phone timing annotations (aligned between the transcripts and audio) using a pre-trained Kaldi model.
-   Description coming soon!
+   Before running these scripts, you need to install the chaipy library. 

@@ -64,7 +64,7 @@ def main():
         # create container
         container_name = args.container_name
         if container_name is None:
-            container_name = create_container(blob_service_cleint, args.container_name_prefix, connect_str)
+            container_name = create_container(blob_service_client, args.container_name_prefix, connect_str)
 
         for file_path, blob_prefix in zip(args.data_file_paths, args.blob_name_prefixes):
             upload_blob(blob_service_client, file_path, blob_prefix, container_name)
