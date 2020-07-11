@@ -110,8 +110,7 @@ def process_non_ascii(text):
         return text
     # normalize unicode characters in a way that replaces accented characters with their
     # unaccented versions
-    text = unicodedata.normalize('NFD', text).encode('ascii', 'ignore')
-    embed()
+    text = unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode("utf-8")
     return text
 
 

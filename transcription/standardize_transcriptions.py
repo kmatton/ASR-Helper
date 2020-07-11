@@ -19,7 +19,7 @@ def write_transcript(data_df, id_col_name, text_col_name, tp, out_file):
         segment = row[text_col_name]
         seg_id = row[id_col_name]
         if not isinstance(segment, str):
-            print("seg id {} has empty text for transcript {}".format(seg_id, text_col_name))
+            print("WARNING: seg id {} transcript has empty text".format(seg_id))
             continue
         text = tp.process_transcribed_text(segment)
         out_file.write("{} {}\n".format(seg_id, text))
