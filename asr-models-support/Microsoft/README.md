@@ -13,13 +13,16 @@ In order to use Microsoft Azure Speech Services, you first need to create a Micr
 
 
 ### Fine-tuning Microsoft's Speech-to-text Model with the Custom Speech Service
-1. Prepare speech + text data according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-test-and-train). The ground truth/ human-labeled transcriptions should be formatted according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-human-labeled-transcriptions). This code repo contains scripts to help convert your transcripts into the format expected by Microsoft. In order to do this, run the follwoing command from within teh ASR-Helper/transcription directory:
+1. Prepare speech + text data according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-test-and-train). The ground truth/ human-labeled transcriptions should be formatted according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-human-labeled-transcriptions). This code repo contains scripts to help convert your transcripts into the format expected by Microsoft. In order to do this, run the following command from within the ASR-Helper/transcription directory:
     python standardize_transcriptions.py --transcription_file <path to CSV file containing your transcriptions> \
                                          --id_col_name <name of column within transcription file that contains audio file ids> \
                                          --transcript_col_name <name of column within transcription file that contains transcription text> \
                                          --output_file_path <path to text file to ouptut normalized transcriptions to> \
                                          --text_processor "Microsoft"
 More details on the script options are specified within the script itself.
+2. Use the Microsoft Azure portal to create a speech resource. Instructions for doing this can be found [here]().
+3. Log into the Custom Speech Portal and create a new project. Instructions for doing this can be found [here]().
+4. Upload your data to the Custom Speech portal, following [these instructions]().
 
 
 ### Subdirectories
