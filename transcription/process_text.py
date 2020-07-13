@@ -3,12 +3,11 @@ import string
 import math
 import re
 
-from process_text_util import remove_nv_exps, process_non_ascii, process_numbers, map_words
+from process_text_util import remove_nv_exps, process_non_ascii, process_numbers, map_words, remove_punctuation
 
 
 """
 Classes for processing transcriptions so that notation is in standard/expected format.
-TODO: check if times are handled properly with this + check MS examples to make sure you've converted them properly
 TODO: implement text processor for aligning transcriptions with that produced by Kaldi ASR model trained on Fisher English corpus
 """
 
@@ -20,7 +19,7 @@ class MicrosoftTextProcessor:
         'ocd': 'o c d',
         'tv': 't v',
         't v': 't v',
-        'dr.': 'doctor',
+        'dr': 'doctor',
         'facebook': 'face book',
         'paypal': 'pay pal',
         'abcde': '',
@@ -31,7 +30,9 @@ class MicrosoftTextProcessor:
         'mmm': 'mm',
         'mg': 'micrograms',
         'uhm': 'um',
-        'cuz': "'cause"
+        'cuz': "'cause",
+        'pm': 'p m',
+        'am': 'a m'
     }
 
     def process_transcribed_text(self, text):
@@ -49,18 +50,26 @@ class MicrosoftTextProcessor:
         if text.isalpha():
             return text
 
+        # replace or remove non-ascii characters
+        text = process_non_ascii(text)
+
         # remove all tags indicating non-verbal expressions
         # here it's expected that non-verbal expressions were listed as [expression] or <expression>
         # e.g. <laughter>, [cough]
         text = remove_nv_exps('<', '>', text)
         text = remove_nv_exps('[', ']', text)
 
-        text = process_non_ascii(text)
+        text = remove_punctuation(text)
         text = process_numbers(text)
+        # now that numbers (including times and decimals) have been processed, can remove colons, periods, commas, and hyphens
+        text = str.replace(text, ':', '')
+        text = str.replace(text, '.', '')
+        text = str.replace(text, ',', '')
+        text = str.replace(text, '-', '')
         text = map_words(text, self.WORD_MAPPINGS)
 
-        # remove double spaces
-        text = re.sub(' +', ' ', text)
         # remove apostrophes that are not attached to words (i.e. are on their own)
         text = re.sub(" ' ", ' ', text)
+        # remove double spaces
+        text = re.sub(' +', ' ', text)
         return text

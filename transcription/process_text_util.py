@@ -27,11 +27,11 @@ def remove_nv_exps(left_char, right_char, text):
 def remove_punctuation(text):
     """
     Remove the following puncutation marks: semi-colon, parantheses, question mark, brackets, exclaimation mark,
-    backslash, quotes, hyphens, colons, plus signs, and percents. Dollar signs and some periods are processed separately,
+    backslash, quotes, hyphens, plus signs, and percents. Dollar signs, commas, hyphens, colons, and some periods are processed separately,
     as the processing required in their removal is more complex and needs to be handled at the word-level. Apostrophes are not removed.
     """
     text = re.sub('[;\(\)\?\[\]\!\\\\"]', '', text)
-    text = re.sub('[\/\-:]', ' ', text)
+    text = re.sub('[\/]', ' ', text)
     text = str.replace(text, '+', " plus")
     text = str.replace(text, '%', " percent")
     text = str.replace(text, '.com', " dot com")
@@ -59,15 +59,33 @@ def process_numbers(text):
             words.insert(i+1, "dollars")
             num_words += 1
             continue
+        # if $ is in another part of the word, remove it
+        word = str.replace(word, '$', '')
         if has_numbers(word):
-            if word[-1] == '.':
-                word = word[:-1]
+            # strip periods, colons, commas, and hyphens not within word
+            word = word.strip('.:,-')
+            # check for hyphens within word
+            if '-' in word:
+                sub_words = word.split('-')
+                if len(sub_words) == 2 and has_numbers(sub_words[0]) and has_numbers(sub_words[1]):
+                    sub_words.insert(1, "to")
+                    num_words += process_subwords(i, sub_words, words)
+                    continue 
+            # check for colons within word
+            if ':' in word:
+                sub_words = word.split(":")
+                if len(sub_words) > 1:
+                   if sub_words[1] == '00':
+                       word = sub_words[0]
+                   else:
+                       num_words += process_subwords(i, sub_words, words)
+                       continue
             word = p.number_to_words(word)
             word = str.replace(word, '-', " ")
             word = str.replace(word, ',', "")
             sub_words = word.split(" ")
             if len(sub_words) > 1:
-                num_words += process_subwords(i, word.split(" "), words)
+                num_words += process_subwords(i, sub_words, words)
                 continue
         words[i] = word
         i += 1
