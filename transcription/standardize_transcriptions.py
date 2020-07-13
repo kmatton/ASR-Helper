@@ -14,7 +14,7 @@ It also can be used to prepare transcriptions for use in model training (e.g. wi
 """
 
 
-def write_transcript(data_df, id_col_name, text_col_name, tp, out_file):
+def write_transcript(data_df, id_col_name, text_col_name, tp, out_file, output_original):
     for _, row in data_df.iterrows():
         segment = row[text_col_name]
         seg_id = row[id_col_name]
@@ -22,7 +22,10 @@ def write_transcript(data_df, id_col_name, text_col_name, tp, out_file):
             print("WARNING: seg id {} transcript has empty text".format(seg_id))
             continue
         text = tp.process_transcribed_text(segment)
-        out_file.write("{} {}\n".format(seg_id, text))
+        if output_original:
+            out_file.write("{} {} {}\n".format(seg_id, text, segment))
+        else:
+            out_file.write("{} {}\n".format(seg_id, text))
 
 
 def main():
@@ -37,11 +40,14 @@ def main():
                                                               ' Should be chosen based on desired downstream application. Currently, the only option'
                                                               ' is "Microsoft", which processes transcripts to be in the form expected by Azure Speech Services.'
                                                               ' More options (such as for use with Kaldi models) will be added eventually.')
+    parser.add_argument('--output_original_transcription', action='store_true', help='Also output original transcription in output file.'
+                                                                                     ' This is helpful if you want to more easily compare the'
+                                                                                     ' original transcription with the normalized one.')
     args = parser.parse_args()
     text_processor = get_text_processor(args.text_processor)
     data_df = pd.read_csv(args.transcription_file)
     out_file = open(args.output_file, 'w+')
-    write_transcript(data_df, args.id_col_name, args.transcript_col_name, text_processor, out_file)
+    write_transcript(data_df, args.id_col_name, args.transcript_col_name, text_processor, out_file, args.output_original_transcription)
     out_file.close()
     
 

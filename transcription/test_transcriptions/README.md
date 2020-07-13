@@ -1,0 +1,1 @@
+This directory contains example transcriptions that can be used in testing the standardize_transcriptions.py script.
