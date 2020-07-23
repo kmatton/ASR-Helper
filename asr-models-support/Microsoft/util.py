@@ -24,4 +24,4 @@ class Logger:
         self.stream = stream
     
     def __call__(self, msg):
-        print >> self.stream, '[{}] {}'.format(datetime.now(), msg)
+        print('[{}] {}'.format(datetime.now(), msg), file=self.stream)

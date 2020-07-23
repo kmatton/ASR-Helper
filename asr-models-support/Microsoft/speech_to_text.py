@@ -80,11 +80,13 @@ def run_recognizer(audio_file_path, speech_subscription_key, service_region, log
             # -- RecognitionStatus: status of attempted recognition e.g. 'Success'
             property_dict = json.loads(list(evt.result.properties.values())[0])
             recognition_result_list.append(property_dict)
+        elif evt.result.reason == speechsdk.ResultReason.NoMatch:
+            log('NOMATCH for file {}: {}'.format(audio_file_path, evt))
 
     def canceled_cb(evt):
-        if evt.result.reason == speechsdk.ResultReason.Canceled: 
+        if evt.result.reason == speechsdk.ResultReason.Canceled:
             cancellation_details = evt.result.cancellation_details
-            log('Speech Recognition canceled: {}'.format(cancellation_details.reason))
+            log('Speech Recognition canceled for file {}. Reason: {}'.format(audio_file_path, cancellation_details.reason))
             if cancellation_details.reason == speechsdk.CancellationReason.Error:
                 log('Error details: {}'.format(cancellation_details.error_details))
 
@@ -105,6 +107,9 @@ def run_recognizer(audio_file_path, speech_subscription_key, service_region, log
     while not done:
         time.sleep(5)
 
+    speech_recognizer.session_stopped.disconnect_all()
+    speech_recognizer.canceled.disconnect_all()
+
     return recognition_result_list
 
 
@@ -113,6 +118,7 @@ def process_audio_files(audio_files, speech_subscription_key, logger, args):
     raw_results = {}
     processed_results = []
     for file_id, file_path in audio_files:
+        print("Starting recognizer for file {}".format(file_id))
         recognition_results = run_recognizer(file_path, speech_subscription_key, args.service_region, logger, args.custom_model_endpoint)
         raw_results[file_id] = recognition_results
         # store each section of recognized audio (which somewhat correspond to segments) separately
