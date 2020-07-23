@@ -55,7 +55,7 @@ def run_recognizer(audio_file_path, speech_subscription_key, service_region, log
     recognition_result_list = []
 
     def stop_cb(evt):
-        print('CLOSING on {}'.format(evt))
+        log('CLOSING on {}'.format(evt))
         speech_recognizer.stop_continuous_recognition()
         nonlocal done
         done = True
@@ -88,15 +88,15 @@ def run_recognizer(audio_file_path, speech_subscription_key, service_region, log
             cancellation_details = evt.result.cancellation_details
             log('Speech Recognition canceled for file {}. Reason: {}'.format(audio_file_path, cancellation_details.reason))
             if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                log('Error details: {}'.format(cancellation_details.error_details))
+                log('ERROR: cancellation error details: {}'.format(cancellation_details.error_details))
 
     # initialize event handlers for the speech recognizer
     # connnect callback functions to event signals
-    speech_recognizer.recognizing.connect(lambda evt: print('RECOGNIZING: {}'.format(evt)))
-    speech_recognizer.recognized.connect(lambda evt: print('RECOGNIZED: {}'.format(evt)))
-    speech_recognizer.session_started.connect(lambda evt: print('SESSION STARTED: {}'.format(evt)))
-    speech_recognizer.session_stopped.connect(lambda evt: print('SESSION STOPPED {}'.format(evt)))
-    speech_recognizer.canceled.connect(lambda evt: print('CANCELED {}'.format(evt)))
+    speech_recognizer.recognizing.connect(lambda evt: log('RECOGNIZING: {}'.format(evt)))
+    speech_recognizer.recognized.connect(lambda evt: log('RECOGNIZED: {}'.format(evt)))
+    speech_recognizer.session_started.connect(lambda evt: log('SESSION STARTED: {}'.format(evt)))
+    speech_recognizer.session_stopped.connect(lambda evt: log('SESSION STOPPED {}'.format(evt)))
+    speech_recognizer.canceled.connect(lambda evt: log('CANCELED {}'.format(evt)))
     speech_recognizer.recognized.connect(recognized_cb)
     speech_recognizer.canceled.connect(canceled_cb)
     speech_recognizer.session_stopped.connect(stop_cb)
@@ -113,13 +113,13 @@ def run_recognizer(audio_file_path, speech_subscription_key, service_region, log
     return recognition_result_list
 
 
-def process_audio_files(audio_files, speech_subscription_key, logger, args):
+def process_audio_files(audio_files, speech_subscription_key, log, args):
     # get results for each audio file
     raw_results = {}
     processed_results = []
     for file_id, file_path in audio_files:
-        print("Starting recognizer for file {}".format(file_id))
-        recognition_results = run_recognizer(file_path, speech_subscription_key, args.service_region, logger, args.custom_model_endpoint)
+        log("Starting recognizer for file {}".format(file_id))
+        recognition_results = run_recognizer(file_path, speech_subscription_key, args.service_region, log, args.custom_model_endpoint)
         raw_results[file_id] = recognition_results
         # store each section of recognized audio (which somewhat correspond to segments) separately
         # for each text segment, store duration, offset, best display text, confidence, and word timing
@@ -136,6 +136,7 @@ def process_audio_files(audio_files, speech_subscription_key, logger, args):
             best_hyp = result['NBest'][0]
             result_dict["confidence"] = best_hyp["Confidence"]
             result_dict["word_timing"] = best_hyp["Words"]
+            result_dict["text_basic"] = best_hyp["Lexical"]  # text without capitalization or punctuation
             processed_results.append(result_dict)
     # write raw results to json file
     with open(os.path.join(args.output_dir, 'recognition_results.json'), 'w+') as f:
@@ -154,7 +155,7 @@ def parse_args():
     parser.add_argument('--service_region', type=str, default="northcentralus", help="Service region associated with the speech resource you are using.")
     parser.add_argument('--custom_model_endpoint', type=str, help="Endpoint associated with the speech recognition model you want to use. If not provided, "
                                                                   "will use Microsoft's default speech-to-text model.")
-    parser.add_argument('--log_errors', action='store_true', help="Set this option to write errors to log file rather than std error.")
+    parser.add_argument('--to_log', action='store_true', help="Set this option to write progress and errors to log file rather than stdout.")
     return parser.parse_args()
 
 
@@ -166,9 +167,9 @@ def main():
     speech_subscription_key = os.getenv('SPEECH_SUBSCRIPTION_KEY')
 
     # init logger
-    stream = sys.stderr
-    if args.log_errors:
-        stream = open(os.path.join(args.output_dir, "errors.log"), "w+")
+    stream = sys.stdout
+    if args.to_log:
+        stream = open(os.path.join(args.output_dir, "speech_recognition.log"), "w+")
     logger = Logger(stream)
 
     # run recognizer on files

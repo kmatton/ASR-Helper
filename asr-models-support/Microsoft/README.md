@@ -30,6 +30,8 @@ Note: I found that for the dataset I was working with ([the PRIORI emotion datas
 
 
 ### Using a Microsoft Speech-to-text Model to Transcribe your Data
+The steps described below can be used to produce text transcriptions for a collection of audio files. In addition to this, the speech_to_text.py script described below also produces confidence scores and timing information for each speech segment detect as well as word-level timing information.
+
 These instructions and the scripts mentioned in this section were created based on the Microsoft speech-to-text documentation found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/speech-to-text-basics?tabs=import&pivots=programming-language-python), as well as the articles mentioned in the [extentions section](#extentions) below.
 
 To use a speech-to-text model to transcribe your data, follow these steps:
@@ -42,7 +44,7 @@ If you are using a machine with Red Hat Enterprise Linux / Centos07, setting up 
 5. Create a text file specifing the ids and filepaths of the audio files you want to transcribe. Each line of the file should be of the form `<audio file id> <path to audio file>` where a single space separates the two items.
 6. To transcribe the files, run this command:
     python speech_to_text.py --audio_files <path to your text file from step #5> --output_dir <directory to output transcriptions to>
-See the script for more details on the arguments and other optional arguments you can use.
+In addition to the transcribed text, this will produced model confidence scores for each speech segment detected, the timing within the audio file for each segment detected, and word-level timing information. See the script for more details on the arguments and other optional arguments you can use.
 
 
 #### Extensions

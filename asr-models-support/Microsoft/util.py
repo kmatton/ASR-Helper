@@ -20,8 +20,9 @@ class Logger:
     """
     Class for logging script errors
     """
-    def __init__(self, stream=sys.stderr):
+    def __init__(self, stream=sys.stdout):
         self.stream = stream
+        self.err_stream = err_stream
     
     def __call__(self, msg):
         print('[{}] {}'.format(datetime.now(), msg), file=self.stream)
