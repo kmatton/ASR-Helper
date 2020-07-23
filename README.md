@@ -6,3 +6,8 @@ The directories included are:
 * segmentation: scripts for segmenting audio files into regions of continuous speech.
 * transcription: scripts for normalizing transcriptions (human generated or ASR) to use for training ASR models
   or computing ASR performance.
+
+## To-dos
+* finish up extracting timing support
+* add confidence score computation support
+* add in WER computation support

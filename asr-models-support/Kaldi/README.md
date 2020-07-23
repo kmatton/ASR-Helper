@@ -1,44 +1,57 @@
+## Prerequisites
+
+
 This directory contains scripts for the following:
 
-1. Kaldi Data Preparation
-  Scripts for generating the data preparation files required by Kaldi for training and running ASR models. See [here](https://kaldi-asr.org/doc/data_prep.html) for more details about what Kaldi expects for data preparation. The relevant files are prep_asr_data_dir.sh and prep_asr_data.py (which is used by prep_asr_data_dir.sh as a helper script). To prepare your dataset using these scripts, follow these steps:
-  * Install Kaldi. Instructions for this can be found [here](https://kaldi-asr.org/doc/install.html).
-  * Make sure all the audio files you want to transcribe are in a single directory
-  * Make sure your audio files are named in the form <audio_file_id>.<file_extention>
-  * Create a text file that contains a mapping between the audio file ids and the speaker ids associated with them. This file should contain lines of the form <audio_file_id> <speaker_id> (where the two are separated by a single space).
-  * Run the following command: (see the prep_asr_data_dir.sh file for details on what the arguments are)
-        prep_asr_data_dir.sh --audio_dir <path to directory with your audio files> \
-                             --output_dir <path data prep directory to create> \
-                             --metadata_file_path <path to text file mapping audio ids to speaker ids> \
-                             --kaldi_dir <path to Kaldi s5 directory you will be working out of> \
-                             --segments_dir <path to directory with files listting call segment times> \
-                             --num_groups <number of groups to split audio files into> \
-                             --convert_file_cmd <command for converting audio file formats>
-  A few notes on the above command:
-  * The <kalid_dir> you choose to work out of will depend on what model you're using and/or what dataset
-    you train your model on. For example, if you are working with the Kaldi pre-trained Aspire model 
-    (which was trained on the Aspire dataset), you will likely want to work out of the kaldi/egs/aspire/s5 directory.
-  * The segments_dir, num_groups, and convert_file_cmd arguments are optional
-  * If you choose to split your data into groups (which enables parallel execution of the transcript generation step described below), this script will generate a text file with the group names within your output directory. This file will be named group_names.txt. The path of this file is needed for step 2 described below.
+## Kaldi Data Preparation
+Scripts for generating the data preparation files required by Kaldi for training and running ASR models. See [here](https://kaldi-asr.org/doc/data_prep.html) for more details about what Kaldi expects for data preparation. The relevant files are prep_asr_data_dir.sh and prep_asr_data.py (which is used by prep_asr_data_dir.sh as a helper script). To prepare your dataset using these scripts, follow these steps:
+* Install Kaldi. Instructions for this can be found [here](https://kaldi-asr.org/doc/install.html).
+* Make sure all the audio files you want to transcribe are in a single directory
+* Make sure your audio files are named in the form <audio_file_id>.<file_extention>
+* Create a text file that contains a mapping between the audio file ids and the speaker ids associated with them. This file should contain lines of the form <audio_file_id> <speaker_id> (where the two are separated by a single space).
+* Run the following command: (see the prep_asr_data_dir.sh file for details on what the arguments are)
+    prep_asr_data_dir.sh --audio_dir <path to directory with your audio files> \
+                            --output_dir <path data prep directory to create> \
+                            --metadata_file_path <path to text file mapping audio ids to speaker ids> \
+                            --kaldi_dir <path to Kaldi s5 directory you will be working out of> \
+                            --segments_dir <path to directory with files listting call segment times> \
+                            --num_groups <number of groups to split audio files into> \
+                            --convert_file_cmd <command for converting audio file formats>
+A few notes on the above command:
+* The <kalid_dir> you choose to work out of will depend on what model you're using and/or what dataset
+you train your model on. For example, if you are working with the Kaldi pre-trained Aspire model 
+(which was trained on the Aspire dataset), you will likely want to work out of the kaldi/egs/aspire/s5 directory.
+* The segments_dir, num_groups, and convert_file_cmd arguments are optional
+* If you choose to split your data into groups (which enables parallel execution of the transcript generation step described below), this script will generate a text file with the group names within your output directory. This file will be named group_names.txt. The path of this file is needed for step 2 described below.
 
-  2. Transcript Generation with Pre-Trained Kaldi Model
-     Scripts for using a pre-trained Kaldi model to generate transcripts for your own data. For example, these scripts can be used to run the Kaldi pre-trained Aspire Model (which is the best pre-trained Kaldi model I've seen; WER on PRIORI ~32%). See [here](https://chrisearch.wordpress.com/2017/03/11/speech-recognition-using-kaldi-extending-and-using-the-aspire-model/) for instructions on how to download and install the pre-trained Aspire model. To run this model, or any other pre-trained model, use the run_asr.sh script. First make sure you have your dataset prepared in the format expected by Kaldi (you can achieve this by following step 1 above). The run_asr.sh contains two stages: (0) it uses the pre-trained model specified to generate lattices for your data and (1) it decodes these lattices into transcripts. To run the script, use the following command (arguments are described in more detail within the script itself):
-         run_asr.sh --data_dir <path to data prepartion dir generated by step 1 above> \
-                    --kaldi_dir <path to Kaldi s5 directory to work out of> \
-                    --stage <integer stage to start at (0 or 1)> \
-                    --groups_file <path to file with data group names> \
-                    --output_dir <path to directory to store transcripts in> \
-                    --decode_config <path to config file used for decoding> \
-                    --word_symbol_table <path to word symbol table> \
-                    --mdl_path <path to ASR model file> \
-                    --hclg_path <path to HCLG WFST graph>
-    If you choose to use the pre-trained Aspire model described above and you install it according to the directions described [here](https://chrisearch.wordpress.com/2017/03/11/speech-recognition-using-kaldi-extending-and-using-the-aspire-model/), then the model-related arguments for the run_asr.sh will have the following values:
-    * decode_config = 'exp/tdnn_7b_chain_online/conf/online.conf'
-    * word_symbol_table = 'exp/tdnn_7b_chain_online/graph_pp/words.txt'
-    * mdl_path = 'exp/tdnn_7b_chain_online/final.mdl'
-    * hclg_path = 'exp/tdnn_7b_chain_online/graph_pp/HCLG.fst'
-    The outputs of this script (stored within output_dir) are (1) one or more archive files that store the lattices associated with your audio files and (2) the decoded text (transcripts). The transcripts will be text files that contain lines of the form <audio_segment_id> <text>. There will be one lattice and transcript file per data group (as produced in the data prep step above) or one of each of these files if your data wasn't split into groups.
+## Transcript Generation with Pre-Trained Kaldi Model
+Scripts for using a pre-trained Kaldi model to generate transcripts for your own data. For example, these scripts can be used to run the Kaldi pre-trained Aspire Model (which is the best pre-trained Kaldi model I've seen; WER on PRIORI ~32%). See [here](https://chrisearch.wordpress.com/2017/03/11/speech-recognition-using-kaldi-extending-and-using-the-aspire-model/) for instructions on how to download and install the pre-trained Aspire model. To run this model, or any other pre-trained model, use the run_asr.sh script. First make sure you have your dataset prepared in the format expected by Kaldi (you can achieve this by following he data preparation steps described above). The run_asr.sh contains two stages: (0) it uses the pre-trained model specified to generate lattices for your data and (1) it decodes these lattices into transcripts. To run the script, use the following command (arguments are described in more detail within the script itself):
+    run_asr.sh --data_dir <path to data prepartion dir generated by step 1 above> \
+            --kaldi_dir <path to Kaldi s5 directory to work out of> \
+            --stage <integer stage to start at (0 or 1)> \
+            --groups_file <path to file with data group names> \
+            --output_dir <path to directory to store transcripts in> \
+            --decode_config <path to config file used for decoding> \
+            --word_symbol_table <path to word symbol table> \
+            --mdl_path <path to ASR model file> \
+            --hclg_path <path to HCLG WFST graph>
+If you choose to use the pre-trained Aspire model described above and you install it according to the directions described [here](https://chrisearch.wordpress.com/2017/03/11/speech-recognition-using-kaldi-extending-and-using-the-aspire-model/), then the model-related arguments for the run_asr.sh will have the following values:
+* decode_config = 'exp/tdnn_7b_chain_online/conf/online.conf'
+* word_symbol_table = 'exp/tdnn_7b_chain_online/graph_pp/words.txt'
+* mdl_path = 'exp/tdnn_7b_chain_online/final.mdl'
+* hclg_path = 'exp/tdnn_7b_chain_online/graph_pp/HCLG.fst'
+The outputs of this script (stored within output_dir) are (1) one or more archive files that store the lattices associated with your audio files and (2) the decoded text (transcripts). The transcripts will be text files that contain lines of the form <audio_segment_id> <text>. There will be one lattice and transcript file per data group (as produced in the data prep step above) or one of each of these files if your data wasn't split into groups.
 
-3. Word and Phone Timing Extraction with Pre-Trained Kaldi Model
-   Scripts for generating word and phone timing annotations (aligned between the transcripts and audio) using a pre-trained Kaldi model.
-   Before running these scripts, you need to install the chaipy library. 
+## Word and Phone Timing Extraction with Pre-Trained Kaldi Model
+Scripts for generating word and phone timing annotations (aligned between the transcripts and audio) using a pre-trained Kaldi model.
+
+Before running these scripts, you need to install the [chaipy library](https://github.com/ducle90/chai_share/tree/master/Libs/chaipy). The steps to do this are as follows:
+1. Clone the chai share git reposititory found [here](https://github.com/ducle90/chai_share).
+2. Expose the location of the cloned repository through `~/.bashrc` (or an equivalent file like `~/.bash_profile`). To do so, add this line to the TOP of the file:
+```
+export CHAI_SHARE_PATH=<path to where you cloned the chai share repo>
+```
+3. Follow the [instructions found here](https://github.com/ducle90/chai_share/tree/master/Libs/chaipy) to install the chaipy library. Make sure to `source ~/.bashrc` after updating your PYTHONPATH environment variable according to the instructions.
+
+## TODOs:
+* Add scripts and documentation to support getting Kaldi ASR confidence scores
