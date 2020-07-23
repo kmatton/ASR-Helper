@@ -22,7 +22,6 @@ class Logger:
     """
     def __init__(self, stream=sys.stdout):
         self.stream = stream
-        self.err_stream = err_stream
     
     def __call__(self, msg):
         print('[{}] {}'.format(datetime.now(), msg), file=self.stream)
