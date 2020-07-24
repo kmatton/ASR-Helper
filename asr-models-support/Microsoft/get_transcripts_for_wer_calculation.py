@@ -2,6 +2,7 @@ import argparse
 import os
 
 import pandas as pd
+from IPython import embed
 
 
 """
@@ -20,10 +21,15 @@ def create_transcript_file(input_file, output_dir):
     df = pd.read_csv(input_file)
     df.set_index('audio_file_id', inplace=True)
     output_file = open(os.path.join(output_dir, "microsoft_transcript_basic_text.txt"), 'w+')
-    for idx in df.index.values:
+    for idx in sorted(list(set(df.index.values))):
         # note: basic text doesn't include most capitalization and punctuation,
         # but it does include apostrophes and capitalization for acronyms
-        text = " ".join(df.loc[idx].sort(by='segment_order')['text_basic'])
+        audio_file_df = df.loc[idx]
+        if isinstance(audio_file_df, pd.DataFrame):
+            audio_file_df = audio_file_df.sort_values('segment_number')
+            text = " ".join(audio_file_df['text_basic'])
+        else:
+            text = audio_file_df['text_basic']
         # convert to lowercase so that WER doesn't account for casing differences
         text = text.lower()
         output_file.write(f"{idx} {text}\n")
