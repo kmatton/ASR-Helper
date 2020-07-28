@@ -1,6 +1,8 @@
 #!/bin/bash
-transcript_dir=$1
-kaldi_dir=$2
-cd $2
+kaldi_dir=$1
+ref_file_path=$2
+asr_file_path=$3
+output_dir=$4
+cd $1
 . ./path.sh
-compute-wer --text --mode=present ark:$1/ref_transcript.txt ark:$1/asr_transcript.txt > $working_dir/WER_output.txt
+compute-wer --text --mode=present ark:$2 ark:$3/ > $4/WER_output.txt
