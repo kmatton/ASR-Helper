@@ -47,6 +47,14 @@ If you are using a machine with Red Hat Enterprise Linux / Centos07, setting up 
 In addition to the transcribed text, this will produced model confidence scores for each speech segment detected, the timing within the audio file for each segment detected, and word-level timing information. See the script for more details on the arguments and other optional arguments you can use.
 
 
+### Evaluting the Performance (Word Error Rate) of Microsoft Speech-to-text Model
+If you have ground truth/human-labeled transcripts for your data, after transcribing via the [steps described in the section above](#using-a-speech-to-text-model), you can evaluate the peformance the speech-to-text model by following these steps:
+1. Normalize your ground truth transcripts so that they follow the notation used in the output of Microsoft's speech-to-text model. (#TODO: add steps from custom speech model above)
+2. Extract the basic text output produced by the Microsoft speech-to-text model (i.e. transcribed speech without punctuation or capitalization). Once you have completed the [transcription steps above](#using-a-speech-to-text-model) to obtain recognition results for your data (i.e. the recognition_results.csv), you can run the following command to get a file with just the basic text output:
+    python get_transcripts_for_wer_calculation.py --input_file <path to your recognition_results.csv file> --output_dir <path to directory to save basic text transcript file to>
+3. At this point you should have two text files: one with your ground truth transcriptions and one with the transcriptions produced by the Micorosft speech-to-text model. Both of these files should be formatted so that each line is of the form: <audio file ID> <transcription text>. Both files should contain exactly the same audio file IDs. Once you've confirmed this, you can compute the WER using the score_transcriptions.sh script in the `evaluation` directory in this repo. The instructions on running that script can be found in the README file in that directory.
+
+
 #### Extensions
 If you wish to adapt the scripts described above for your own purposes, the following documentation may be useful:
 * This [article](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/rest-speech-to-text#query-parameters) describes the Speech Recognition response parameters for the REST API, which I found to be the same as the response parameters for the Speech SDK (I could not found a similar article describing the parameters for the speech SDK).
