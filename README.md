@@ -7,8 +7,3 @@ The directories included are:
   or computing ASR performance. This involves things like handling punctuation, abbreviations, the inclusion of non-verbal expressions, etc so that
   notation of human-generated transcript is consistent with that produced by different ASR models.
 * **evaluation**: scripts for computing the word error rate (WER) of transcripts produced by an ASR model.
-  
-## TO-DOS
-* Kaldi: extracting word + phone timing, getting confidence scores
-* Transcription model specific to Kaldi model trained on Fisher English
-* Documentation of WERs on PRIORI emotion
