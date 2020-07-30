@@ -26,9 +26,10 @@ def remove_nv_exps(left_char, right_char, text):
 
 def remove_punctuation(text):
     """
-    Remove the following puncutation marks: semi-colon, parantheses, question mark, brackets, exclaimation mark,
-    backslash, quotes, hyphens, plus signs, and percents. Dollar signs, commas, hyphens, colons, and some periods are processed separately,
-    as the processing required in their removal is more complex and needs to be handled at the word-level. Apostrophes are not removed.
+    Remove the following punctuation marks: semi-colon, parentheses, question marks, brackets, exclamation marks,
+    backslashes, quotes, hyphens, plus signs, and percents. Dollar signs, commas, hyphens, colons, and some periods are
+    processed separately, as the processing required in their removal is more complex and needs to be handled at
+    the word-level. Apostrophes are not removed.
     """
     text = re.sub('[;\(\)\?\[\]\!\\\\"]', '', text)
     text = re.sub('[\/]', ' ', text)

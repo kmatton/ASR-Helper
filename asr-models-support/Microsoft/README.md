@@ -1,22 +1,15 @@
 This directory contains scripts to support using Microsoft Azure Speech Services for training and testing ASR models.
 
-Note: if the data you are working with sensitive (e.g. PII), all steps that involve copying
-keys or signatures associated with your Azure account or data should be done while
-working on a U of M Machine (or other machine with security guarantees). This can be done
-by using RDP to connect to a U of M machine. Instructions for connecting to U of M CAEN machines
-remotely can be found [here](https://caen.engin.umich.edu/connect/).
-
-
 ### Prerequisites
 In order to use Microsoft Azure Speech Services, you first need to create a Microsoft Azure account. You can create a personal account [here](https://azure.microsoft.com/en-us/free/search/?&ef_id=EAIaIQobChMIjdi3s87F6gIVDdbACh3pcgpEEAAYASAAEgJQ4vD_BwE:G:s&OCID=AID2100131_SEM_EAIaIQobChMIjdi3s87F6gIVDdbACh3pcgpEEAAYASAAEgJQ4vD_BwE:G:s&gclid=EAIaIQobChMIjdi3s87F6gIVDdbACh3pcgpEEAAYASAAEgJQ4vD_BwE). You can also create an account through U of M ITS [here](https://its.umich.edu/computing/virtualization-cloud/microsoft-azure), which will come with elevated security guarantees. Further, when you sign up for a U of M Azure account, you can link your account to an M Community group. If you do this, all members of that group will be co-owners of any Microsoft Azure resource that you create.
 
 
 ### Fine-tuning Microsoft's Speech-to-text Model with the Custom Speech Service
-1. Prepare speech + text data according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-test-and-train). The ground truth/ human-labeled transcriptions should be formatted according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-human-labeled-transcriptions). This code repo contains scripts to help convert your transcripts into the format expected by Microsoft. In order to do this, run the following command from within the ASR-Helper/transcription directory:
-    python standardize_transcriptions.py --transcription_file <path to CSV file containing your transcriptions> \
-                                         --id_col_name <name of column within transcription file that contains audio file ids> \
-                                         --transcript_col_name <name of column within transcription file that contains transcription text> \
-                                         --output_file_path <path to text file to ouptut normalized transcriptions to> \
+1. Prepare speech + text data according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-test-and-train). The ground truth/ human-labeled transcriptions should be formatted according to the instructions found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-custom-speech-human-labeled-transcriptions). This code repo contains scripts to help convert your transcripts into the format expected by Microsoft. In order to do this, run the following command from within the ASR-Helper/transcription_normalization directory:
+    python standardize_transcriptions.py --transcription_file \<path to CSV file containing your transcriptions> \
+                                         --id_col_name \<name of column within transcription file that contains audio file ids> \
+                                         --transcript_col_name \<name of column within transcription file that contains transcription text> \
+                                         --output_file_path \<path to text file to ouptut normalized transcriptions to> \
                                          --text_processor "Microsoft"
 More details on the script options are specified within the script itself.
 2. Use the Microsoft Azure portal to create a speech resource. Instructions for doing this can be found [here](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started#create-the-resource). Make sure to choose the 'Standard S0' pricing tier.
@@ -45,6 +38,14 @@ If you are using a machine with Red Hat Enterprise Linux / Centos07, setting up 
 6. To transcribe the files, run this command:
     python speech_to_text.py --audio_files <path to your text file from step #5> --output_dir <directory to output transcriptions to>
 In addition to the transcribed text, this will produced model confidence scores for each speech segment detected, the timing within the audio file for each segment detected, and word-level timing information. See the script for more details on the arguments and other optional arguments you can use.
+
+
+### Evaluting the Performance (Word Error Rate) of Microsoft Speech-to-text Model
+If you have ground truth/human-labeled transcripts for your data, after transcribing via the [steps described in the section above](#using-a-speech-to-text-model), you can evaluate the peformance the speech-to-text model by following these steps:
+1. Normalize your ground truth transcripts so that they follow the notation used in the output of Microsoft's speech-to-text model. (#TODO: add steps from custom speech model above)
+2. Extract the basic text output produced by the Microsoft speech-to-text model (i.e. transcribed speech without punctuation or capitalization). Once you have completed the [transcription steps above](#using-a-speech-to-text-model) to obtain recognition results for your data (i.e. the recognition_results.csv), you can run the following command to get a file with just the basic text output:
+    python get_transcripts_for_wer_calculation.py --input_file <path to your recognition_results.csv file> --output_dir <path to directory to save basic text transcript file to>
+3. At this point you should have two text files: one with your ground truth transcriptions and one with the transcriptions produced by the Micorosft speech-to-text model. Both of these files should be formatted so that each line is of the form: <audio file ID> <transcription text>. Both files should contain exactly the same audio file IDs. Once you've confirmed this, you can compute the WER using the score_transcriptions.sh script in the `evaluation` directory in this repo. The instructions on running that script can be found in the README file in that directory.
 
 
 #### Extensions
