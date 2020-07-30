@@ -166,6 +166,10 @@ def main():
     # Retrieve ASR subscription key, which should be stored in an environment variable on the machine you're using.
     speech_subscription_key = os.getenv('SPEECH_SUBSCRIPTION_KEY')
 
+    # if output_dir doesn't exist, create it
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    
     # init logger
     stream = sys.stdout
     if args.to_log:
