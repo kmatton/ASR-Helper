@@ -37,6 +37,7 @@ def run_recognizer(audio_file_path, speech_subscription_key, service_region, log
     speech_config = speechsdk.SpeechConfig(subscription=speech_subscription_key, region=service_region)
     if custom_model_endpoint is not None:
         speech_config.endpoint_id = custom_model_endpoint
+        print("using custom model with endpoint {}".format(speech_config.endpoint_id))
     # see here for explanation of the 'format' and 'profanity' config settings
     # https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/rest-speech-to-text#query-parameters
     # format=detailed produces responses which contain multiple hypotheses + the confidence values of each
@@ -141,6 +142,9 @@ def process_audio_files(audio_files, speech_subscription_key, log, args):
     # write raw results to json file
     with open(os.path.join(args.output_dir, 'recognition_results.json'), 'w+') as f:
         json.dump(raw_results, f)
+    if len(processed_results) == 0:
+        log("WARNING: No text was recognized for any of the audio files. Not creating recognition_results.csv.")
+        return
     # store processed results as csv file
     result_df = pd.DataFrame(processed_results)
     result_df.set_index(['audio_file_id', 'segment_number'], inplace=True)
